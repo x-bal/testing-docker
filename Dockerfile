@@ -1,40 +1,48 @@
-# Menggunakan base image Ubuntu 20.04
-FROM ubuntu:20.04
+# Menggunakan base image resmi PHP dengan versi 8.2
+FROM php:8.2-apache
 
-# Update paket dan instal dependensi yang diperlukan
+# Menambahkan dependensi yang dibutuhkan oleh Laravel
 RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    git \
-    nginx \
-    software-properties-common
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip
 
-# Install PHP 8.2
-RUN add-apt-repository ppa:ondrej/php && \
-    apt-get update && \
-    apt-get install -y php8.2-cli php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-xml php8.2-curl php8.2-zip php8.2-gd
+# Mengaktifkan mod_rewrite Apache
+RUN a2enmod rewrite
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Menginstal ekstensi PHP yang dibutuhkan oleh Laravel
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath opcache zip
 
-# Set work directory
+# Mengatur direktori kerja
 WORKDIR /var/www/html
 
-# Copy source code ke work directory
-COPY . .
+# Menyalin file-filenya ke direktori kerja
+COPY . /var/www/html
 
-# Install dependencies menggunakan Composer
-RUN composer install --no-interaction --no-scripts --no-suggest --prefer-dist
+# Memberikan akses kepada user www-data
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html/storage
 
-# Konfigurasi Nginx
-COPY nginx/default /etc/nginx/sites-available/default
+# Menyalin konfigurasi Apache
+COPY ./docker/apache2.conf /etc/apache2/apache2.conf
 
-# Set permission pada storage dan cache Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Mengeset timezone PHP
+RUN echo "date.timezone = Asia/Jakarta" >> /usr/local/etc/php/php.ini
 
-# Expose port 80 untuk HTTP
-EXPOSE 80
+# Menjalankan perintah composer install untuk menginstal dependensi Laravel
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --optimize-autoloader --no-dev
 
-# Jalankan Nginx dan PHP-FPM
-CMD service nginx start && service php8.2-fpm start
+# Menyalin file .env
+COPY .env.example .env
+
+# Membuat key aplikasi Laravel
+RUN php artisan key:generate
+
+# Mengeksekusi migrasi database
+RUN php artisan migrate --force
+
+# Menjalankan perintah Apache
+CMD ["apache2-foreground"]
