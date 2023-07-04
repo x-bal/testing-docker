@@ -2,12 +2,14 @@ FROM php:8-apache
 
 RUN a2enmod rewrite
 
-RUN apt-get update && apt-get install -y \
-    pdo_mysql \
+RUN apt-get update && \
+    apt-get install -y \
     libzip-dev \
-    unzip
+    unzip \
+    default-mysql-client \
+    && docker-php-ext-install zip
 
-RUN docker-php-ext-install zip pdo_mysql
+RUN docker-php-ext-install pdo pdo_mysql
 
 COPY . /var/www/html
 
