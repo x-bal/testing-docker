@@ -3,9 +3,9 @@ FROM php:8-apache
 RUN a2enmod rewrite
 
 RUN apt-get update && apt-get install -y \
+    pdo_mysql \
     libzip-dev \
-    unzip \
-    pdo_mysql 
+    unzip
 
 RUN docker-php-ext-install zip pdo_mysql
 
