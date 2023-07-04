@@ -4,16 +4,16 @@ FROM php:8-apache
 # Set the working directory
 WORKDIR /var/www/html
 
+# Disable JIT compilation
+ENV PHP_INI_OPCACHE_ENABLE="0"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
     zip \
-    unzip \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev
+    unzip
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
