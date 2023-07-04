@@ -25,5 +25,15 @@ RUN echo "file_uploads = On\n" \
     "max_execution_time = 1200\n" \
     > /usr/local/etc/php/conf.d/uploads.ini
 
+# Menjalankan perintah composer install untuk menginstal dependensi Laravel
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --optimize-autoloader --no-dev
+
+# Menyalin file .env
+COPY .env.example .env
+
+# Membuat key aplikasi Laravel
+RUN php artisan key:generate
+
 # Enable headers module
 RUN a2enmod rewrite headers 
