@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     zip \
-    unzip
+    unzip \
+    libpq-dev
 
 # Mengaktifkan mod_rewrite Apache
 RUN a2enmod rewrite
