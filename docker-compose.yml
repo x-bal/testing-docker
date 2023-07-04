@@ -7,18 +7,18 @@ services:
     volumes:
       - .:/var/www/html
     ports:
-      - 8000:8000
+      - 80:80
     depends_on:
       - db
 
   db:
-    image: mysql:5.7
+    image: mysql:8.0
     restart: always
     environment:
       MYSQL_DATABASE: laravel
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: laravel_password
+      MYSQL_ROOT_PASSWORD: root_password
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin

@@ -1,15 +1,12 @@
-FROM php:8.1-apache
-
-RUN apt-get update && \
-    apt-get upgrade -y
+FROM php:8-apache
 
 RUN a2enmod rewrite
 
-RUN apt-get install -y \
-    libzip-dev \
-    unzip
-
-RUN docker-php-ext-install zip pdo_mysql
+RUN apt-get update && \
+    apt-get install -y \
+    apt-get install libzip-dev \
+    apt-get install unzip \
+    apt-get install docker-php-ext-install zip pdo_mysql
 
 COPY . /var/www/html
 
