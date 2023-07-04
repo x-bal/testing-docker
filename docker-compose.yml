@@ -7,7 +7,7 @@ services:
     volumes:
       - .:/var/www/html
     ports:
-      - 80:80 # Update this line to map port 80
+      - 8000:8000
     depends_on:
       - db
 
