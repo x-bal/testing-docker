@@ -2,11 +2,11 @@ FROM php:8-apache
 
 RUN a2enmod rewrite
 
-RUN apt-get update && \
-    apt-get install -y \
-    apt-get install libzip-dev \
-    apt-get install unzip \
-    apt-get install docker-php-ext-install zip pdo_mysql
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    unzip
+
+RUN docker-php-ext-install zip pdo_mysql
 
 COPY . /var/www/html
 
@@ -14,8 +14,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 RUN composer install
 
