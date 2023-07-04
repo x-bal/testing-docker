@@ -1,49 +1,29 @@
-# Menggunakan base image resmi PHP dengan versi 8.2
-FROM php:8.2-apache
+FROM php:8.0-apache
 
-# Menambahkan dependensi yang dibutuhkan oleh Laravel
-RUN apt-get update && apt-get install -y \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    libpq-dev
+RUN apt-get update && apt-get install -y  \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    --no-install-recommends \
+    && docker-php-ext-enable opcache \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql -j$(nproc) gd \
+    && apt-get autoclean -y \
+    && rm -rf /var/lib/apt/lists/* 
 
-# Mengaktifkan mod_rewrite Apache
-RUN a2enmod rewrite
+# Update apache conf to point to application public directory
+ENV APACHE_DOCUMENT_ROOT=/var/www/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Menginstal ekstensi PHP yang dibutuhkan oleh Laravel
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath opcache zip
+# Update uploads config
+RUN echo "file_uploads = On\n" \
+    "memory_limit = 1024M\n" \
+    "upload_max_filesize = 512M\n" \
+    "post_max_size = 512M\n" \
+    "max_execution_time = 1200\n" \
+    > /usr/local/etc/php/conf.d/uploads.ini
 
-# Mengatur direktori kerja
-WORKDIR /var/www/html
-
-# Menyalin file-filenya ke direktori kerja
-COPY . /var/www/html
-
-# Memberikan akses kepada user www-data
-RUN chown -R www-data:www-data /var/www/html
-RUN chmod -R 755 /var/www/html/storage
-
-# Menyalin konfigurasi Apache
-COPY ./docker/apache2.conf /etc/apache2/apache2.conf
-
-# Mengeset timezone PHP
-RUN echo "date.timezone = Asia/Jakarta" >> /usr/local/etc/php/php.ini
-
-# Menjalankan perintah composer install untuk menginstal dependensi Laravel
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN composer install --optimize-autoloader --no-dev
-
-# Menyalin file .env
-COPY .env.example .env
-
-# Membuat key aplikasi Laravel
-RUN php artisan key:generate
-
-# Mengeksekusi migrasi database
-RUN php artisan migrate --force
-
-# Menjalankan perintah Apache
-CMD ["apache2-foreground"]
+# Enable headers module
+RUN a2enmod rewrite headers 
