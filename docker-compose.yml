@@ -1,42 +1,33 @@
-version: '3.8'
+version: "3"
 services:
-    
-    # Application & web server
-    app:
-        build:
-            context: .
-        working_dir: /var/www
-        volumes:
-            - ./:/var/www
-        depends_on:
-            - "database"
-        ports:
-            - 80:80
-    # Database
-    database:
-        image: mysql:8.0
-        volumes:
-            - dbdata:/var/lib/mysql
-        environment:
-            MYSQL_DATABASE: ${DB_DATABASE}
-            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-            MYSQL_PASSWORD: ${DB_PASSWORD}
-            MYSQL_USER: ${DB_USERNAME}
-        ports:
-            - "3306:3306"
-    # Database management
-    pma:
-        image: phpmyadmin:5.1
-        environment:
-            - PMA_ARBITRARY=1
-            - PMA_HOST=${DB_HOST}
-            - PMA_USER=${DB_USERNAME}
-            - PMA_PASSWORD=${DB_PASSWORD}
-            - PMA_PORT=${DB_PORT}
-        depends_on:
-            - database
-        ports:
-            - 8888:80
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: secret
 
 volumes:
-    dbdata:
+  db_data:

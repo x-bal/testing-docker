@@ -1,39 +1,43 @@
-FROM php:8.0-apache
+# Use the official PHP 8 base image
+FROM php:8-apache
 
-RUN apt-get update && apt-get install -y  \
-    libfreetype6-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libwebp-dev \
-    --no-install-recommends \
-    && docker-php-ext-enable opcache \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql -j$(nproc) gd \
-    && apt-get autoclean -y \
-    && rm -rf /var/lib/apt/lists/* 
+# Set the working directory
+WORKDIR /var/www/html
 
-# Update apache conf to point to application public directory
-ENV APACHE_DOCUMENT_ROOT=/var/www/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip
 
-# Update uploads config
-RUN echo "file_uploads = On\n" \
-    "memory_limit = 1024M\n" \
-    "upload_max_filesize = 512M\n" \
-    "post_max_size = 512M\n" \
-    "max_execution_time = 1200\n" \
-    > /usr/local/etc/php/conf.d/uploads.ini
+# Enable mod_rewrite
+RUN a2enmod rewrite
 
-# Menjalankan perintah composer install untuk menginstal dependensi Laravel
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath opcache zip
+
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Copy the Laravel application files
+COPY . /var/www/html
+
+# Install dependencies with Composer
 RUN composer install --optimize-autoloader --no-dev
 
-# Menyalin file .env
-COPY .env.example .env
+# Set the Apache document root
+RUN sed -i 's/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/html\/public/g' /etc/apache2/sites-available/000-default.conf
 
-# Membuat key aplikasi Laravel
+# Change ownership of the application files to the Apache user
+RUN chown -R www-data:www-data /var/www/html/storage
+
+# Generate Laravel application key
 RUN php artisan key:generate
 
-# Enable headers module
-RUN a2enmod rewrite headers 
+# Expose port 80
+EXPOSE 80
+
+# Start the Apache server
+CMD ["apache2-foreground"]
