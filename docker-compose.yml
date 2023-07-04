@@ -8,6 +8,12 @@ services:
       - .:/var/www/html
     ports:
       - 80:80
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=laravel
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
     depends_on:
       - db
 
@@ -15,17 +21,18 @@ services:
     image: mysql:8.0
     restart: always
     environment:
+      MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: laravel
       MYSQL_USER: root
       MYSQL_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
-    ports:
-      - 8080:80
     depends_on:
       - db
