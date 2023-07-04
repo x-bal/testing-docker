@@ -6,12 +6,13 @@ RUN apt-get update && \
     apt-get install -y \
     libzip-dev \
     unzip \
-    default-mysql-client \
-    && docker-php-ext-install zip
-
-RUN docker-php-ext-install pdo pdo_mysql
+    default-mysql-client
 
 COPY . /var/www/html
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install pdo pdo_mysql
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
