@@ -1,12 +1,15 @@
-FROM php:8.2-apache
+FROM php:8.1-apache
+
+RUN apt-get update && \
+    apt-get upgrade -y
 
 RUN a2enmod rewrite
 
-RUN apt-get update && \
-    apt-get install -y \
+RUN apt-get install -y \
     libzip-dev \
-    unzip \
-    && docker-php-ext-install zip pdo_mysql
+    unzip
+
+RUN docker-php-ext-install zip pdo_mysql
 
 COPY . /var/www/html
 
@@ -19,4 +22,4 @@ RUN php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
 RUN composer install
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
